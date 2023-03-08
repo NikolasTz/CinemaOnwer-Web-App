@@ -20,7 +20,7 @@
 
 ## Description
 
-A CinemaOwner Application using Microservices and the Docker Environment...
+A CinemaOwner Application using Microservices and the Docker Environment.
 
 There are seven components:
 
