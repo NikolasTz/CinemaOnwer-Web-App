@@ -1,0 +1,27 @@
+
+/* Background image */
+body {
+	background-image: url('../img/backgorund-welcome.jpg');
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+  	background-size: cover;
+}
+
+/* DropDown content*/
+.dropdown-content {
+	background-color: #FFFFFF;
+	display: none;
+	min-width: 300px;
+	max-height: auto;
+	opacity: 1;
+	position: absolute;
+	white-space: nowrap;
+	will-change: width, height;
+}
+
+/* Footer */
+footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+}

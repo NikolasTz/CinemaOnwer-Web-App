@@ -1,0 +1,8 @@
+
+/* Background image */
+body {
+	background-image: url('../img/background-signup.jpg');
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+  	background-size: cover;
+}

@@ -1,0 +1,13 @@
+
+/* Background image */		
+body {
+	background-image: url('../img/background-index.jpg');
+	background-repeat: no-repeat;
+	background-attachment: fixed;
+  	background-size: cover;
+}
+
+/* Section */
+section{
+	margin-top: 7%;
+}
