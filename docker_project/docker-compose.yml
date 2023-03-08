@@ -1,0 +1,220 @@
+version: '3.8'
+
+services:
+
+  # Application
+  web:
+    build: .
+    container_name: web_app
+    hostname: web
+    expose: 
+      - '80'
+    ports:
+      - '80:80'
+    volumes:
+     - ./project_2:/var/www/html
+    restart: always
+    
+  # Keyrock
+  keyrock:
+    image: fiware/idm:7.6.0
+    container_name: fiware-keyrock
+    hostname: keyrock
+    depends_on:
+      - mysql-db
+    networks:
+      default:
+        ipv4_address: 172.18.1.5
+    ports:
+      - '3005:3005'
+      - '443:443'
+    environment:
+      - IDM_DB_HOST=mysql-db
+      - IDM_HOST=http://localhost:3005
+      - IDM_PORT=3005
+      - IDM_DB_PASS=secret
+      - IDM_DB_USER=root
+      - IDM_ADMIN_USER=admin
+      - IDM_ADMIN_EMAIL=admin@test.com
+      - IDM_ADMIN_PASS=1234
+  
+  # Keyrock database
+  mysql-db:
+    image: mysql:5.7.21
+    hostname: mysql-db
+    container_name: mysql-keyrock
+    networks:
+      default:
+        ipv4_address: 172.18.1.6
+    expose:
+      - '3306'
+    ports:
+      - '3306:3306'
+    environment:
+      - 'MYSQL_ROOT_PASSWORD=secret'
+      - 'MYSQL_ROOT_HOST=172.18.1.5'
+    volumes:
+      - mysql-db:/var/lib/mysql
+    restart: always
+  
+  # Nodejs server for Data Storage Service
+  nodejs:
+    build: ./node
+    container_name: node-mongo
+    hostname: nodejs
+    depends_on:
+      - mongo
+    expose: 
+      - '27018'
+    ports:
+      - '27018:27018'
+    environment:
+      - MONGO_USERNAME=nikos
+      - MONGO_PASSWORD=nikos
+      - MONGO_HOSTNAME=mongo
+    volumes:
+      - ./node:/usr/src/app
+      - /usr/src/app/node_modules
+    restart: always
+  
+  # Mongo as Data Storage Service
+  mongo:
+    image: mongo
+    hostname: mongodb
+    container_name: mongo_db
+    networks:
+      default:
+        ipv4_address: 172.18.1.8
+    expose: 
+      - '27017'
+    ports: 
+      - '27017:27017'
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=nikos
+      - MONGO_INITDB_ROOT_PASSWORD=nikos
+    volumes: 
+      - mongodb:/data/db
+    restart: always
+  
+  # Mongo express for Mongo of Data Storage Service
+  mongo-express:
+    image: mongo-express:0.54
+    container_name : mongo_express
+    networks:
+      default:
+        ipv4_address: 172.18.1.13
+    depends_on:
+      - mongo
+    expose:
+      - '8081'
+    ports:
+      - '8081:8081'
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=nikos
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=nikos
+    restart: always
+  
+  # PEP Proxy for Data Storage Service  
+  data_storage-proxy:
+    image: fiware/pep-proxy
+    hostname: data-proxy
+    container_name: data_storage-proxy
+    networks:
+      default:
+        ipv4_address: 172.18.1.10
+    depends_on:
+      - keyrock
+    expose:
+      - '1027'
+    ports:
+      - '1027:1027'
+    environment:
+      - PEP_PROXY_APP_HOST=nodejs
+      - PEP_PROXY_APP_PORT=27018
+      - PEP_PROXY_PORT=1027
+      - PEP_PROXY_IDM_HOST=keyrock
+      - PEP_PROXY_HTTPS_ENABLED=false
+      - PEP_PROXY_AUTH_ENABLED=false
+      - PEP_PROXY_IDM_SSL_ENABLED=false
+      - PEP_PROXY_IDM_PORT=3005
+      - PEP_PROXY_APP_ID=ddb26225-3cbe-4d84-b079-767105da13b9
+      - PEP_PROXY_USERNAME=pep_proxy_a9b41cb5-0fb8-40fe-a29f-8980e024bab6
+      - PEP_PASSWORD=pep_proxy_bb974ed3-0d2d-49a2-9f7d-ef106273ff5c
+      - PEP_PROXY_PDP=idm
+      - PEP_PROXY_MAGIC_KEY=1234
+    restart: always
+  
+  # Orion
+  orion:
+    image: fiware/orion
+    hostname: orion
+    container_name: fiware-orion
+    depends_on:
+      - mongo-db
+    networks:
+      default:
+        ipv4_address: 172.18.1.9
+    expose:
+      - '1026'
+    ports:
+      - '1026:1026'
+    command: -db mongo-db -dbhost mongo-db -logLevel DEBUG
+
+  # Database Orion
+  mongo-db:
+    image: mongo
+    hostname: mongo-db
+    container_name: db-mongo
+    networks:
+      default:
+        ipv4_address: 172.18.1.12
+    expose:
+      - '27019'
+    ports:
+      - '27019:27019'
+    volumes:
+      - mongo-db:/data/db
+    restart: always
+  
+  # PEP Proxy for Orion
+  orion-proxy:
+    image: fiware/pep-proxy
+    container_name: fiware-orion-proxy
+    hostname: orion-proxy
+    networks:
+      default:
+        ipv4_address: 172.18.1.11
+    depends_on:
+      - keyrock
+      - orion
+    expose: 
+      - '1028'
+    ports:
+      - '1028:1028'
+    environment:
+      - PEP_PROXY_APP_HOST=orion
+      - PEP_PROXY_APP_PORT=1026
+      - PEP_PROXY_PORT=1028
+      - PEP_PROXY_IDM_HOST=keyrock
+      - PEP_PROXY_HTTPS_ENABLED=false
+      - PEP_PROXY_AUTH_ENABLED=false
+      - PEP_PROXY_IDM_SSL_ENABLED=false
+      - PEP_PROXY_IDM_PORT=3005
+      - PEP_PROXY_APP_ID=ddb26225-3cbe-4d84-b079-767105da13b9
+      - PEP_PROXY_USERNAME=pep_proxy_a9b41cb5-0fb8-40fe-a29f-8980e024bab6
+      - PEP_PASSWORD=pep_proxy_bb974ed3-0d2d-49a2-9f7d-ef106273ff5c
+      - PEP_PROXY_PDP=idm
+      - PEP_PROXY_MAGIC_KEY=1234
+      - PEP_PROXY_PUBLIC_PATHS=/version
+    restart: always
+      
+volumes:
+  mysql-db: ~
+  mongodb: ~
+  mongo-db: ~
+
+networks:
+    default:
+        ipam:
+            config:
+                - subnet: 172.18.1.0/24
