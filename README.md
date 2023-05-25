@@ -20,7 +20,7 @@
 
 ## Description
 
-A CinemaOwner Application using Microservices and the Docker Environment.
+A CinemaOwner Application using Microservices and the Docker Environment. The IDM,Proxy, and the Publish/Subscirbe servives are based on the Fiware Lab.
 
 There are seven components:
 
@@ -30,9 +30,10 @@ There are seven components:
    2. Authentication of users using OAUth2 protocol
 3. Proxy
    1. [PEP PROXY - WILMA](https://fiware-pep-proxy.readthedocs.io/en/latest/)
-   2. Protection of backend container- Authorization
+   2. Protection of backend containers - Authorization
 4. Publish/Subscribe service
    1. [Orion Context Broker](https://fiware-orion.readthedocs.io/en/master/)
+   2. The Publish-Subscribe mechanism facilates the creation of subscriptions and notifications for users regarding the movies available on the platform
 5. Data storage service
    1. REST API
    2. Communication between application logic and database
